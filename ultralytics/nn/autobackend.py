@@ -11,6 +11,7 @@ import torch.nn as nn
 
 from ultralytics.utils.checks import check_suffix
 from ultralytics.utils.downloads import is_url
+from ultralytics.utils import LOGGER
 
 from .backends import (
     AxeleraBackend,
@@ -226,6 +227,14 @@ class AutoBackend(nn.Module):
         if not self.backend.names:
             self.backend.names = default_class_names(data)
         self.backend.names = check_class_names(self.backend.names)
+        empty_cls_ids = [k for k, v in self.backend.names.items() if not v.strip()]
+        if empty_cls_ids:
+            # Give warning to user if there are classes with empty strings
+            LOGGER.warning(
+                f"Detected class IDs with empty class names at index(es): {empty_cls_ids}."
+                f"These will appear as blank labels during inference."
+                f"Consider updating the 'names' attribute."
+            )
 
     def __getattr__(self, name: str) -> Any:
         """Delegate attribute access to the backend.
